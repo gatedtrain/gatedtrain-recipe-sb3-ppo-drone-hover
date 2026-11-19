@@ -26,8 +26,10 @@ import hashlib
 import os
 import importlib.metadata
 import json
+import pwd
 import random
 import shutil
+import unittest
 import zipfile
 from pathlib import Path
 from typing import Any, Callable
@@ -77,6 +79,17 @@ INTERPRETER_TEXT = "# fixture stand-in for the area-2 venv interpreter; never ex
 ENV_VERSION_SHA = file_sha256(SB3 / "env_version.json")
 SHARD_SHA = file_sha256(SB3 / SHARD)
 ENV_NAMES = ["HF_HUB_OFFLINE", "HOME", "PYTHONDONTWRITEBYTECODE", "PYTHONUNBUFFERED", "XDG_CACHE_HOME"]
+
+
+def run_user() -> str:
+    """The container's `<uid>:<gid>` in fixture requests and records: the uid running the tests and its primary group,
+    so the output directories the tests create are owned by the container's uid (EXT-63) whoever runs them. The launch
+    rules refuse root, so a test that needs it skips under uid 0."""
+    uid = os.getuid()
+    if uid == 0:
+        raise unittest.SkipTest("the launch rules refuse a container running as root (uid 0); run the tests as a "
+                                "non-root user")
+    return f"{uid}:{pwd.getpwuid(uid).pw_gid}"
 
 
 def payload(init: dict) -> str:
@@ -373,7 +386,7 @@ class Sb3Scenario:
                "mounts": [{"host": str(self.runtime), "container": RUNTIME_CONTAINER, "mode": "ro"},
                           {"host": str(self.base), "container": BASE_CONTAINER, "mode": "ro"},
                           {"host": str(self.stage_out), "container": "/out", "mode": "rw"}],
-               "tmpfs": ["/tmp"], "network": "none", "network_reason": None, "user": "1000:1000",
+               "tmpfs": ["/tmp"], "network": "none", "network_reason": None, "user": run_user(),
                "env_names": list(ENV_NAMES), "gpu_est_h": 0, "gpu_used_h": 3.12,
                "output_dir": str(self.stage_out), "output_root": str(self.output_root),
                "gpu_step_sha256": file_sha256(self.host_work / "bin" / "gpu-step.sh"), "allow_network": False,

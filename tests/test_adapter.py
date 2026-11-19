@@ -23,7 +23,7 @@ from gatedtrain.testing.ext import ENV_INPUT_ROOTS, IMAGE_ID, sha_of, write_cano
 from _sb3 import (ADAPTER, BASE_CONTAINER, ENV_NAMES, ENV_VERSION_SHA, EVAL_HOVER, EVAL_HOVER_SHA256, EVALUATOR_ID,
                   HAS_TRL, NO_TRL, RUNTIME_CONTAINER, SAMPLER, SB3, SCORER, SHARD, SUPPORT_ID, TRAINER_ID, TRL_ADAPTER,
                   TRL_EVALUATOR_ID, Sb3Scenario, baseline_score, build_arm, build_cut, guard_log, sb3_model_hash,
-                  smoke_record)
+                  run_user, smoke_record)
 from gatedtrain.testing.support import (EXIT_OK, EXIT_REFUSED, describe, file_sha256, manifest_hash, parse_errors,
                                         parse_run_dir, run_cli)
 
@@ -635,7 +635,7 @@ class LaunchSb3(unittest.TestCase):
         req = {"area": 4, "label": "mm-a2-drones-full", "host_work": rec["host_work"],
                "runtime": {"kind": "venv_in_container", "image": IMAGE_ID, "venv_lock": str(self.tmp / "uv.lock")},
                "framework": rec["framework"], "training_seed": 2000, "gpus": False, "network": "none",
-               "network_reason": None, "user": "1000:1000",
+               "network_reason": None, "user": run_user(),
                # README "Mounts and command shape"; EXT-114: HOME and XDG_CACHE_HOME are paths under /tmp
                "env": {**{n: "1" for n in ENV_NAMES}, "HOME": "/tmp/home", "XDG_CACHE_HOME": "/tmp/cache"},
                "mounts": [m if m["mode"] == "ro" else {**m, "host": str(self.out)} for m in rec["mounts"]],
