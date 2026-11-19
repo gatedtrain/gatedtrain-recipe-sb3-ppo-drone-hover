@@ -1,0 +1,35 @@
+# Area "control" workflow: SB3 PPO hover, continuation from base cut 8 (MULTIMODAL-SPEC sections 5-7, row 4).
+# prototype, unpromotable. Written from the gatedtrain draft (2026-11-12); registration.yaml and trainer.yaml beside it.
+# One training stage outside gatedtrain (the continue phase; ext-launch prints the command, gpu-step.sh runs it) and
+# one superiority gate on eval_hover.py arms filled by ext-arm-fill, collected by
+# `gatedtrain ext-collect --adapter sb3_ppo`. `gatedtrain run` refuses this spec.
+# base is the base-phase run's cut 8 (maintainers' decision 2026-11-12, option a): pin it with its T0-09 manifest hash
+# (`@sha256:<hex>`) once the base run has written it; ext-launch --spec and ext-collect bind it to the continuation's
+# read-only mount /inputs/base (EXT-101). env_params is the env snapshot's shard directory (C3: one shard per
+# env_params_version); its file lies inside the read-only area2-drones mount (EXT-103). items is the registered set.
+# Re-pin the registration hash after any amendment.
+workflow: mm-a2-drones-hover
+version: 1
+budget: {gpu_hours: 24}
+artifacts:
+  base:         {type: model_checkpoint, uri: "file:<data-root>/ptc-mm/out/area2-drones/base-1/checkpoint-8@sha256:211c18d85ed4d9e5f2fb68c131c44a0f82fb0525b4b068fb5846f0d4763634df"}
+  env_params:   {type: training_dataset, uri: "file:<data-root>/ptc-mm/area2-drones/env-snapshot/shards@sha256:d12f691ef99baa3bfffb7a3bc4ddaeefc429d17975e60057ccd1a4ae4d532bbc"}
+  items:        {type: item_set, uri: "file:<data-root>/ptc-mm/area2-drones/items@sha256:8531e5ba14941466275659cc4c0381376acd17caf4b5d31b36b8e78948daf7e7", disjoint_from: [env_params]}
+  trainer_cfg:  {type: trainer_config, uri: "file:trainer.yaml@sha256:8c67724d29a2fff9e5da0ec9f0c9a70c26a521a1531bdad623988e6566762a99"}
+  registration: {type: registration, uri: "file:registration-gatedtrain.yaml@sha256:e38be3d3da9db586a54bc51cdca6014da1dfb02de21ee79dba2efa8a11b4a5a4"}
+stages:
+  - id: rl
+    uses: rl.sb3_ppo@0.1
+    algorithm: ppo
+    model_family: control.mlp_policy@0.1
+    inputs: {model: base, data: env_params, config: trainer_cfg}
+    outputs: {model: rl_ckpt}
+  - id: quality_gate
+    uses: gate.superiority@1.0
+    evaluator: drones.sb3_items@0.1
+    sampler: deployment
+    inputs: {model: rl_ckpt, baseline: base, items: items, registration: registration}
+    test: {metric: hover_success, alpha: 0.05, power: 0.80, mde: 0.06, cluster_by: item, seeds: 1}
+    on_fail: stop
+    owner: skeleton-demo
+    escalation: [skeleton-demo-lead]

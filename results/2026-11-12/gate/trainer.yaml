@@ -1,0 +1,3 @@
+# Area "control" trainer config for ext-collect (EXT-2): the adapter and the launch profile. prototype, unpromotable.
+backend: sb3_ppo
+profile: full

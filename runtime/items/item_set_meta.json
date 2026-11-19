@@ -1,0 +1,14 @@
+{
+  "env_params_sha256": "sha256:3f36545e36b4d2ed7527c03c26950bd9ff8aeabcb9af5d81363cc5c572e36dbf",
+  "generator": "numpy SeedSequence([0x5eed17e5, item_seed]) -> default_rng; per item uniform draws in init_order, rounded to decimals; duplicates skipped",
+  "item_seed": 20261112,
+  "items_sha256": "sha256:da59931fd22bd49b7e3002a8987363db9bc3f995ebfae4cbbf1c993d4381e65f",
+  "n": 300,
+  "numpy": "2.5.4",
+  "schema": "ptc_mm.drones_item_set",
+  "schema_version": "1.0",
+  "tags": [
+    "prototype",
+    "unpromotable"
+  ]
+}

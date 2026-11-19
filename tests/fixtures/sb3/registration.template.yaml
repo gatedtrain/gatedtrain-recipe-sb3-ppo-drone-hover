@@ -1,0 +1,54 @@
+# Area "control" fixture registration (verifier-owned; prototype, unpromotable). tests/README.md section 11.19.
+# Rendered by tests/_sb3.py: {item_set_hash} is the manifest hash of the fixture item set, {env_version} the SHA-256 of
+# the env snapshot's env_version.json, {evaluator_hash} the identity hash of drones.sb3_items@0.1 (EXT-6).
+# The shape of the area's registration (area2-drones README "Power"): deciding T3 metric hover_success, superiority
+# with margin 0, sigma 0.39 (pilot-derived, the larger sd_diff of two sanity pilots), N 300, K 1, alpha 0.05
+# one-sided, power 0.8; planning effect 0.06, so n_required = ceil((2.4865 x 0.39 / 0.06)^2) = 262 <= 300.
+registration_version: 1
+registration_id: ext-sb3-fixture-superiority-v1
+signed_by: prototype-unsigned
+workflow: ext-sb3-fixture
+gate: quality_gate
+clause:
+  type: superiority
+  metric: hover_success
+  direction: higher_is_better
+  margin: 0.0
+  alpha: 0.05
+  power: 0.8
+  planning_effect: 0.06
+  sigma_plan: fixed
+  unit: item
+  samples_per_item: 1
+  eval_seeds: [0]
+  interval: cluster_bootstrap
+  blocking: true
+margin_justification: Fixture value (superiority, delta_sup = 0).
+sigma_pilot:
+  sigma: 0.39
+  source: Fixture value; the area's pilot sd_diff 0.388 (base cut 8 to continue cut 58), rounded up.
+baseline_pilot_mean: 0.322
+eval_distribution:
+  item_set_hash: "{item_set_hash}"
+  env_version: "{env_version}"
+  env_params_version: hover-init-v1
+sampler:
+  policy: deterministic (Gaussian mean)
+  vecnormalize: {training: false, norm_reward: false}
+  episodes_per_item: 1
+  max_steps: 242
+evaluators:
+  - id: drones.sb3_items@0.1
+    manifest_hash: "{evaluator_hash}"
+multiplicity:
+  plan: single_gate
+  family: null
+analysis_code_version: gatedtrain 0.3.0
+bootstrap:
+  replicates: 10000
+  seed: 20261112
+pairing:
+  max_unpaired: 0
+min_paired: 10
+contamination:
+  allow_exact_overlap: false

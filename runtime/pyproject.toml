@@ -1,0 +1,41 @@
+# Multimodal prototype, area "control" (gatedtrain MULTIMODAL-SPEC section 6 row 4): Stable-Baselines3 PPO on
+# gym-pybullet-drones hover, continued training from an under-trained base policy (prototype, unpromotable).
+# Runtime kind `venv_in_container` (MULTIMODAL-SPEC MM-32): this lock builds a host venv that is mounted
+# read-only into a pinned CUDA base image. See README.md.
+#
+# Version rule: latest stable release at least two weeks old on 2026-11-12 (cut-off 2026-10-29), compatible.
+#   stable-baselines3 2.9.2 (2026-10-26), gymnasium 1.4.0 (2026-10-05), torch 2.15.0 (2026-10-28, CPU build:
+#   PPO with an MLP policy runs on CPU, see README.md "CPU, not GPU"), pybullet 3.2.7 (2025-01-30, the latest;
+#   PyPI has no cp312 wheel, so uv builds it from the locked sdist with the host's gcc 13.3, Ubuntu 24.04 like
+#   the container image).
+#   gym-pybullet-drones is not on PyPI (pypi.org/pypi/gym-pybullet-drones/json returns 404): pinned to commit
+#   15c426c85ac8e7a5db66d8b100f48858133357f6 (2026-10-28, package version 2.2.0) of
+#   github.com/learnsyslab/gym-pybullet-drones (formerly utiasDSL/gym-pybullet-drones).
+[project]
+name = "gatedtrain-recipe-sb3-ppo-drone-hover-runtime"
+version = "0.1.0"
+license = "Apache-2.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "stable-baselines3==2.9.2",
+    "gymnasium==1.4.0",
+    "torch==2.15.0",
+    "pybullet==3.2.7",
+    "gym-pybullet-drones",
+]
+
+[tool.uv]
+package = false
+# Linux x86_64 only.
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+# Every transitive dependency resolves to a release at least two weeks old.
+exclude-newer = "2026-10-29T00:00:00Z"
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+gym-pybullet-drones = { git = "https://github.com/learnsyslab/gym-pybullet-drones", rev = "15c426c85ac8e7a5db66d8b100f48858133357f6" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

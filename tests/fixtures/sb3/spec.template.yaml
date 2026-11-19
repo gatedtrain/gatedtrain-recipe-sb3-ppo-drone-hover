@@ -1,0 +1,29 @@
+# Area "control" fixture spec: SB3 PPO hover continuation gated against its base cut (verifier-owned; prototype,
+# unpromotable). tests/README.md section 11.19. Rendered by tests/_sb3.py: {base} is the base run's cut directory
+# (checkpoint-<I> of the base-phase run), {data} the env-params shard directory of the env snapshot (C3: one shard
+# per env_params_version), {registration_sha256} the SHA-256 of the rendered registration.yaml.
+workflow: ext-sb3-fixture
+version: 1
+budget: {gpu_hours: 24}
+artifacts:
+  base:         {type: model_checkpoint, uri: "file:{base}"}
+  env_params:   {type: training_dataset, uri: "file:{data}"}
+  items:        {type: item_set, uri: "file:items", disjoint_from: [env_params]}
+  trainer_cfg:  {type: trainer_config, uri: "file:trainer.yaml"}
+  registration: {type: registration, uri: "file:registration.yaml@sha256:{registration_sha256}"}
+stages:
+  - id: rl
+    uses: rl.sb3_ppo@0.1
+    algorithm: ppo
+    model_family: control.mlp_policy@0.1
+    inputs: {model: base, data: env_params, config: trainer_cfg}
+    outputs: {model: rl_ckpt}
+  - id: quality_gate
+    uses: gate.superiority@1.0
+    evaluator: drones.sb3_items@0.1
+    sampler: deployment
+    inputs: {model: rl_ckpt, baseline: base, items: items, registration: registration}
+    test: {metric: hover_success, alpha: 0.05, power: 0.80, mde: 0.06, cluster_by: item, seeds: 1}
+    on_fail: stop
+    owner: skeleton-demo
+    escalation: [skeleton-demo-lead]

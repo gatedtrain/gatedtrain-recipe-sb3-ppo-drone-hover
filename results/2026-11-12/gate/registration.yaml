@@ -1,0 +1,68 @@
+# Area "control" pre-registration: SB3 PPO hover continuation against base cut 8 (05 section 3.7; MULTIMODAL-SPEC
+# section 6 row 4 and its accepted deviations). prototype, unpromotable. Unsigned: no named team has signed it.
+#
+# Written before the area-2 continuation smoke and full runs (`created_at` below precedes
+# their first START in gpu-guard.log); base cut 8 pinned in spec.yaml after the base run.
+# Values (area2-drones README "Power", "Decisions taken", maintainers' decisions 2026-11-12): deciding T3 metric
+# hover_success; superiority with margin 0; sigma 0.39 from the sanity pilots on the 300 items (sd of paired
+# differences 0.341 for base cut 4 -> continue cut 54 and 0.388 for base cut 8 -> continue cut 58, the larger rounded
+# up); alpha 0.05 one-sided, power 0.8; N 300, K 1 (policy and simulator are deterministic). The planning effect 0.06
+# is the smallest round effect the 300 items can show: n_required = ceil(((1.6449 + 0.8416) x 0.39 / 0.06)^2) = 262.
+# Any later change is an amendment: a new registration with `amends` and a new hash in spec.yaml (05:166).
+registration_version: 1
+registration_id: mm-a2-drones-hover-superiority-v1
+signed_by: prototype-unsigned
+workflow: mm-a2-drones-hover
+gate: quality_gate
+created_at: "2026-11-12T20:28:01Z"
+clause:
+  type: superiority
+  metric: hover_success
+  direction: higher_is_better
+  margin: 0.0                 # delta_sup = 0 (05 section 3.1)
+  alpha: 0.05                 # one-sided (maintainers' decision 2026-11-12)
+  power: 0.8
+  planning_effect: 0.06       # the MDE at N = 300 with sigma 0.39 is 0.056; see the header
+  sigma_plan: fixed
+  unit: item
+  samples_per_item: 1
+  eval_seeds: [0]             # eval_hover.py --eval-seed 0; nothing draws from it (README "K = 1")
+  interval: cluster_bootstrap
+  blocking: true
+margin_justification: >-
+  Superiority with delta_sup = 0: any held-out gain in the fraction of hover steps within 0.06 m of the target
+  altitude counts. Prototype value, not reviewed by a named team.
+sigma_pilot:
+  sigma: 0.39
+  source: >-
+    Pilot-derived (area2-drones README "Power"): sd of per-item paired hover_success differences on the 300
+    registered items, 0.341 (base cut 4 -> continue cut 54) and 0.388 (base cut 8 -> continue cut 58, the registered
+    pair's shape); the larger, rounded up. Sanity runs on the run host's CPU, outputs in a temporary directory.
+baseline_pilot_mean: 0.322    # base cut 8, 300 items (README "Base policy"); 49.0 % of items at 0 (MM-38 margin, README open question 1)
+eval_distribution:
+  item_set_hash: "sha256:8531e5ba14941466275659cc4c0381376acd17caf4b5d31b36b8e78948daf7e7"   # manifest of area2-drones/items/
+  env_version: "sha256:c0e03e0ebf22a8a726d823cd4d0505bdc41149ba0118aca11f05b45c482d2fb2"     # env-snapshot/env_version.json
+  env_params_version: hover-init-v1
+sampler:                      # eval_hover.py SAMPLER: the deterministic policy (EXT-106)
+  policy: deterministic (Gaussian mean)
+  vecnormalize: {training: false, norm_reward: false}
+  episodes_per_item: 1
+  max_steps: 242
+evaluators:
+  - id: drones.sb3_items@0.1
+    # EXT-6: SHA-256 of the canonical JSON {evaluator, metric, direction, scorer}; scorer hover_success at
+    # eval_hover@0.2, code_sha256 = SHA-256 of area2-drones/eval_hover.py (sha256:8bc66417...).
+    manifest_hash: "sha256:0069196c5011c3937131b249c09d346eb67f8df848e702fc75080f5eb2d235ff"
+multiplicity:
+  plan: single_gate
+  family: null
+analysis_code_version: ptc-skel 0.1.0
+bootstrap:
+  replicates: 10000
+  seed: 20261112
+pairing:
+  max_unpaired: 0             # every item must be in both arms
+min_paired: 10
+contamination:
+  allow_exact_overlap: false  # MM-11, EXT-107: item payloads against both runs' training episodes
+post_hoc: false

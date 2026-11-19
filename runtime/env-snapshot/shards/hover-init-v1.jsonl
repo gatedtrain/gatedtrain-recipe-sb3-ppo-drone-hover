@@ -1,0 +1,1 @@
+{"action_buffer_reset": "zeros at every reset", "decimals": 4, "env_params_version": "hover-init-v1", "init_order": ["x", "y", "z", "vz"], "init_ranges": {"vz": [-0.5, 0.5], "x": [-0.25, 0.25], "y": [-0.25, 0.25], "z": [0.15, 1.85]}, "init_rpy": [0.0, 0.0, 0.0]}

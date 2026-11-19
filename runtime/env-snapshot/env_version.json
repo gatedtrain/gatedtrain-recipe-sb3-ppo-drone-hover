@@ -1,0 +1,19 @@
+{
+  "assets_files_sha256": "sha256:9c16d7a1295283ad45a4cbe31ed7b2f1ee8375992bb53a194a3f4c1ba0aca60a",
+  "commit": "15c426c85ac8e7a5db66d8b100f48858133357f6",
+  "env_class_sha256": "sha256:fa3efa3a62331638d6112fe6a9b1b68657009e8d5720a93bca5d2668448c6b7a",
+  "env_id": "gym_pybullet_drones.envs.HoverAviary.HoverAviary + train_ppo.HoverItemEnv",
+  "env_kwargs": {
+    "act": "one_d_rpm",
+    "ctrl_freq": 30,
+    "drone_model": "cf2x",
+    "gui": false,
+    "obs": "kin",
+    "physics": "pyb",
+    "pyb_freq": 240,
+    "record": false
+  },
+  "package": "gym-pybullet-drones",
+  "pybullet": "3.2.7",
+  "version": "2.2.0"
+}
