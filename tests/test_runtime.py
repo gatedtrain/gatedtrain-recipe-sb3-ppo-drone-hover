@@ -18,6 +18,7 @@ import importlib.metadata
 import importlib.util
 import io
 import json
+import math
 import shutil
 import sys
 import tempfile
@@ -750,6 +751,11 @@ class TestEvaluateArm(unittest.TestCase):
         self.assertEqual([r["item_meta"]["init"] for r in records], [r["init"] for r in self.rows])
         summary = json.loads((arm / "summary.json").read_text())
         self.assertEqual((summary["iteration"], summary["missing_hashes"]), (58, []))
+        # scores 1, 0, 1, 0: mean 0.5 and the sample sd sqrt(4 x 0.25 / 3) (n - 1 = 3; 0.5 would be n = 4)
+        self.assertEqual((summary["items"], summary["errors"], summary["mean"], summary["min"], summary["max"],
+                          summary["distinct_scores"], summary["frac_at_0"], summary["frac_at_1"]),
+                         (4, 0, 0.5, 0.0, 1.0, 2, 0.5, 0.5))
+        self.assertAlmostEqual(summary["sd"], math.sqrt(1 / 3), places=12)
 
     def test_supporting_arm_and_an_error_item(self):
         arm = self.run_eval("hover_score", fail_item=self.rows[2]["item"])
