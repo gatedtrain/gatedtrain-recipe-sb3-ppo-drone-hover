@@ -1,21 +1,50 @@
 # gatedtrain recipe: SB3 PPO drone hover
 
-A [gatedtrain](https://github.com/gatedtrain/gatedtrain) recipe: stable-baselines3 PPO trains a quadrotor to hover in
-gym-pybullet-drones (`HoverAviary`), CPU only, in two phases (a base run from scratch, then a continuation from one of
-its cuts), and gatedtrain gates the continuation against that base cut on 300 held-out initial states. Prototype.
+This recipe teaches a simulated quadrotor to hover, and lets [gatedtrain](https://github.com/gatedtrain/gatedtrain)
+decide whether the continued policy really is better than the one it continued from. stable-baselines3 PPO trains the
+drone in gym-pybullet-drones (`HoverAviary`), CPU only, in two phases: a base run from scratch, then a continuation
+from one of its cuts. gatedtrain gates the continuation against that base cut on 300 held-out initial states, by a rule
+registered before training.
 
-Code comments, tests and the gate files under `results/` cite records of the framework's development: its review
-rounds ("review round 6", "review 9 M1") and the maintainers' decisions of 2026-11-12. Those records are not
-published.
+A recipe is a ready-made external run for gatedtrain: the training code with its locked environment, plus an
+*adapter*, the small plugin through which gatedtrain reads the run's outputs. gatedtrain does not start the training;
+you run it.
 
-## Layout
+This is a prototype: the result below is one registered run, not a benchmark claim.
 
-| Path | What |
+## How it works
+
+```mermaid
+flowchart LR
+    env["env-snapshot/ and items/:<br/>HoverAviary snapshot, 300 initial states"] --> base["train_ppo.py in a container:<br/>base run from scratch"]
+    base --> cut8["Base cut 8"]
+    cut8 --> cont["train_ppo.py: continue phase<br/>(50 iterations, CPU)"]
+    cont --> cuts["Checkpoints and<br/>consumption logs"]
+    cut8 --> eval["eval_hover.py: base cut and<br/>continuation on the 300 initial states"]
+    cuts --> eval
+    eval --> arms["Arm files: per-state results"]
+    arms --> collect["gatedtrain ext-collect"]
+    cuts -->|"read through the adapter sb3_ppo"| collect
+    collect --> gate{"Gate"}
+    gate --> report["Gate report, consumption ledger"]
+```
+
+`gatedtrain ext-launch` checks the run request and prints the container command; you run it. The steps, flags and
+arm files are explained in gatedtrain's [External runs](https://gatedtrain.github.io/gatedtrain/external-runs/) guide.
+
+## Result
+
+One registered run, CPU only (0 GPU-hours; base run 23 s, continuation 85 s wall). The base run's cut 8 is the
+baseline; the continuation runs 50 iterations to cut 58.
+
+| | `hover_success` on 300 held-out initial states |
 |---|---|
-| `src/gatedtrain_recipe_sb3_ppo_drone_hover/` | the gatedtrain adapter `sb3_ppo` (`adapter.py`) and its registry rows (`rows.py`), registered through the `gatedtrain.adapters` entry point |
-| `runtime/` | what runs in the container: `train_ppo.py`, `eval_hover.py`, the environment snapshot (`env-snapshot/`), the registered item set (`items/`), and its own `pyproject.toml` and `uv.lock` |
-| `tests/` | the adapter's tests on fixture runs (no simulator needed) and gatedtrain's conformance check |
-| `results/2026-11-12/` | the gate files of the published result (host paths redacted, see `RESULT.md`) |
+| Baseline (base cut 8) | 0.322 |
+| Candidate (cut 58) | 0.992 |
+| Gate | **PASS**: +0.669, 90% cluster-bootstrap interval [0.631, 0.705] |
+
+`RESULT.md` has the full record: the metric (altitude within 0.06 m), power, overlap with training, the impact query
+and the re-collection with this repository's adapter. The gate files are under `results/2026-11-12/`.
 
 ## Setup
 
@@ -36,6 +65,15 @@ the metric.
 `vecnormalize.pkl` with stable-baselines3 (`PPO.load`, `VecNormalize.load`), which unpickle their contents: load
 only checkpoints you produced yourself. The adapter only hashes these files and never opens them.
 
+## Layout
+
+| Path | What |
+|---|---|
+| `src/gatedtrain_recipe_sb3_ppo_drone_hover/` | the gatedtrain adapter `sb3_ppo` (`adapter.py`) and its registry rows (`rows.py`), registered through the `gatedtrain.adapters` entry point |
+| `runtime/` | what runs in the container: `train_ppo.py`, `eval_hover.py`, the environment snapshot (`env-snapshot/`), the registered item set (`items/`), and its own `pyproject.toml` and `uv.lock` |
+| `tests/` | the adapter's tests on fixture runs (no simulator needed) and gatedtrain's conformance check |
+| `results/2026-11-12/` | the gate files of the published result (host paths redacted, see `RESULT.md`) |
+
 ## Tests
 
 ```bash
@@ -45,9 +83,9 @@ python -m unittest discover -s tests -t tests
 Two tests compare this adapter with the TRL GRPO recipe's (`gatedtrain-recipe-trl-grpo-gsm8k`, adapter `trl_grpo`) and
 skip when that recipe is not installed in the same environment.
 
-## Result
-
-See `RESULT.md`.
+Code comments, tests and the gate files under `results/` cite records of the framework's development: its review
+rounds ("review round 6", "review 9 M1") and the maintainers' decisions of 2026-11-12. Those records are not
+published.
 
 ## Data and licenses
 
